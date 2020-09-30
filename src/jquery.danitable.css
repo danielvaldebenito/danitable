@@ -63,6 +63,17 @@
             height: 20px;
         }
 
+         .danitable > .danitable-main > table.danitable-table > thead tr th:first-child,
+         .danitable > .danitable-main > table.danitable-table > tbody tr td:first-child {
+            width: 3em;
+            min-width: 3em;
+            max-width: 3em;
+            word-break: break-all;
+        }
+        .danitable > .danitable-main > table.danitable-table > thead > tr > td:nth-child(1) {
+            background: red;
+        }
+
         .danitable > .danitable-main > table.danitable-table > thead > tr > th,
         .danitable > .danitable-main > table.danitable-table > thead > tr > td {
             border: 1px solid #DDD;
@@ -91,6 +102,7 @@
                 float: right;
                 cursor: pointer;
                 color: #FFF;
+                display: block;
             }
         .danitable > .danitable-main > table.danitable-table > thead > tr > th > .filter:hover,
         .danitable > .danitable-main > table.danitable-table > thead > tr > th > .filter.active {

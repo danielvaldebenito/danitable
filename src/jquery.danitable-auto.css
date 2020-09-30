@@ -1,0 +1,18 @@
+.danitable.danitable-auto {
+    max-height: 800px;
+}
+
+.danitable.danitable-auto > .danitable-main > table.danitable-table {
+    table-layout: auto;
+}
+
+
+.danitable.danitable-auto > .danitable-main > table.danitable-table > thead > tr > th > span,
+.danitable.danitable-auto > .danitable-main > table.danitable-table > thead > tr > td > span {
+    white-space: normal;
+    overflow: auto;
+    text-overflow: clip;
+    max-width: max-content;
+    word-wrap: normal;
+    display: inline;
+}

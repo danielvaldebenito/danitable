@@ -16,7 +16,7 @@
             /** Eventos generales */
 
             $(document).click(function(e) {
-                if($(event.target).closest('.danitable-dropdown').length) {
+                if($(e.target).closest('.danitable-dropdown').length) {
                     return;
                 }
                 $('.danitable-dropdown').each(function(d, dd) {
@@ -570,7 +570,7 @@
                 //     }
                 // });
                 // Inserta celda de selección
-                tr.append(createSelectionableCell());
+                tr.append(createSelectionableCell(row));
                 // Recorre cada celda
                 for (const col of columns) {
                     // Agrega celda
@@ -580,8 +580,24 @@
                 return tr;
             }
 
+            /** Retorna si el checkbox parte chequeado o no */
+            function isSelected(row) {
+                console.log(options.selectionInput);
+                const input = options.selectionInput;
+                if (!input || !options.key) {
+                    return false;
+                }
+                const value = $(input).val();
+                if (!value) return false;
+                const ids = value.split(',');
+                const key = options.key;
+                const data = row[key];
+                return ids.includes(data.toString());
+
+            }
+
             /** Crea celda seleccionable */
-            function createSelectionableCell() {
+            function createSelectionableCell(row) {
                 return $('<td>').append(
                     $('<label>', {
                         class:
@@ -591,14 +607,14 @@
                             // Checkbox
                             $('<input>', {
                                 type: 'checkbox',
-                                checked: false,
+                                checked: isSelected(row),
                             })
                                 .change(function () {
                                     // Notifica a la row que está seleccionada o deseleccionada
-                                    const row = $(this).closest(
+                                    const _row = $(this).closest(
                                         '.danitable-row'
                                     );
-                                    toggleSelectionRow(row, $(this));
+                                    toggleSelectionRow(_row, $(this));
                                 })
                                 .on('danitable:selectall', function (
                                     ev,
@@ -686,6 +702,7 @@
         hidden: [],
         key: 'id',
         title: 'DATOS',
+        selectionInput: null
     };
 
     /** */

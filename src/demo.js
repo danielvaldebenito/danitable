@@ -6,7 +6,11 @@ $(document).ready(function() {
         // Url para consulta
         url: 'https://jsonplaceholder.typicode.com/posts',
         // Columna clave para obtener la selección
-        key: 'id'
+        key: 'id',
+        // Agrega clase Css adicional
+        element_class: 'danitable danitable-auto',
+        // Input para cargar la primera seleccion
+        selectionInput: $('#input-data')
     })
     // Para obtener las filas seleccionadas (ids) en el momento de la selección
     .on('changeSelection', (ev, selection, row, checked) => {
