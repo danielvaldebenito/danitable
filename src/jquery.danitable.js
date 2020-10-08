@@ -33,12 +33,39 @@
                     key = 'userId';
                 }
 
+                console.log(rowData);
+
                 $(this).trigger('changeSelection', [
                     $(element).data('selected'),
                     rowData,
                     checked,
                 ]);
             });
+
+            // Evento cuando se selecciona o deselecciona una fila
+            $(element).on('danitable:selectall', function (ev, checked) {
+                let key = options.key;
+                if (!key) {
+                    console.warn('Debe indicar una clave para la selección');
+                    key = 'userId';
+                }
+                const rows = $(element).data('dataRows') || [];
+                const selected = checked ? rows.map(m => m[key]) : [];
+                $(element).data('selected', selected);
+                $(this).trigger('changeSelection', [
+                    $(element).data('selected'),
+                    null,
+                    checked,
+                ]);
+                $(element)
+                    .find('input:checkbox')
+                    .each(function(i, input) {
+                        if ($(input).is(':visible')) {
+                            $(input).prop('checked', checked);
+                        }
+                    })
+            });
+
 
             let danitableFilters = {};
 
@@ -52,10 +79,11 @@
                 // Limpia elemento
                 $(element).empty();
                 // Obtiene la data de la url seteada.
-                const rows = await getJsonData(options.url, options.headers);
+                const rows = await getJsonData(options.url, options.headers, options.postData);
                 if (!rows) {
                     return true;
                 }
+                $(element).data('dataRows', rows);
                 const main = createMain(rows);
                 if (main) {
                     main.appendTo(element);
@@ -96,7 +124,7 @@
 
             /** Crea encabezado */
             function createTHead(rows) {
-                return $('<thead>').append(createHeaders(rows));
+                return $('<thead>').append(rows && rows.length ? createHeaders(rows) : 'No hay resultados');
             }
 
             /** Crea fila de encabezado */
@@ -136,21 +164,13 @@
                                 })
                                 .change(function () {
                                     const checked = this.checked;
-                                    $('.danitable-row', element).each(function (
-                                        r,
-                                        rowCheck
-                                    ) {
-                                        $(
-                                            rowCheck
-                                        ).trigger('danitable:selectrow', [
-                                            checked,
-                                        ]);
-                                        $(rowCheck)
-                                            .find('input[type=checkbox]')
-                                            .trigger('danitable:selectall', [
-                                                checked,
-                                            ]);
-                                    });
+                                    // $('.danitable-row', element).each(function (r, rowCheck) {
+                                    //     $(rowCheck).trigger('danitable:selectrow', [ checked ]);
+                                    //     $(rowCheck)
+                                    //         .find('input[type=checkbox]')
+                                    //         .trigger('danitable:selectall', [ checked ]);
+                                    //     });
+                                    $(element).trigger('danitable:selectall', [ checked ]);
                                 })
                             )
                             .append(
@@ -280,6 +300,7 @@
                                     const tempRows = getFilteredRows();
                                     filterAnotherOptions(option.parent(), tempRows);
                                     checkIndeterminateStatusOnSelectAll(option);
+                                    
                                 })
                             )
                             .append(
@@ -499,6 +520,9 @@
 
             /** Crea Body */
             function createTBody(rows) {
+                if (!rows || !rows.length) {
+                    return '';
+                }
                 const tbody = $('<tbody>');
                 const columns = getColumns(rows);
                 
@@ -512,27 +536,13 @@
                 return tbody;
             }
 
-            /** Update data after filter */
-            function filterRows() {
-                const dt = $(element).find('.danitable-table');
-                const rows = $(dt).find('.danitable-row');
-                for (const row of rows) {
-                    const data = $(row).data();
-
-                    const show = evaluateRow(data);
-                    if (show) {
-                        $(row).show();
-                    } else {
-                        $(row).hide();
-                    }
-                }
-                return;
-            }
+           
 
 
             /** Crea fila */
             function createRow(row, columns) {
-                const tr = $('<tr>', { data: row, class: 'danitable-row' }).on(
+                const tr = $('<tr>', { data: row, class: 'danitable-row' })
+                .on(
                     'danitable:selectrow',
                     function (ev, checked) {
                         // Notificar cambio
@@ -540,35 +550,7 @@
                         $(element).trigger('danitable:select', [row, checked]);
                     }
                 );
-                // .on('danitable:coloptionhide', function (ev, data) {
-                //     const { col, item } = data;
-                //     if (row[col] && row[col] === item) {
-                //         $(this).hide();
-                //     } else {
-                //         $(this).show();
-                //     }
-                // })
-                // .on('danitable:coloptionshow', function (ev, data) {
-                //     const { col, item } = data;
-                //     if (!row[col] || row[col] !== item) {
-                //         $(this).hide();
-                //     } else {
-                //         $(this).show();
-                //     }
-                // })
-                // .on('danitable:filter', function (
-                //     ev,
-                //     filter,
-                //     checked = true
-                // ) {
-                //     const { col, value } = filter;
-                //     const regex = new RegExp(value, 'gi');
-                //     if (regex.test(row[col]) && checked) {
-                //         $(this).show();
-                //     } else {
-                //         $(this).hide();
-                //     }
-                // });
+               
                 // Inserta celda de selección
                 tr.append(createSelectionableCell(row));
                 // Recorre cada celda
@@ -582,17 +564,17 @@
 
             /** Retorna si el checkbox parte chequeado o no */
             function isSelected(row) {
-                console.log(options.selectionInput);
                 const input = options.selectionInput;
-                if (!input || !options.key) {
+                const selected = options.selected || [];
+                if (!options.key || (!input && !selected.length)) {
                     return false;
                 }
                 const value = $(input).val();
-                if (!value) return false;
+                if (!value && !selected.length) return false;
                 const ids = value.split(',');
                 const key = options.key;
                 const data = row[key];
-                return ids.includes(data.toString());
+                return ids.includes(data.toString()) || selected.includes(data.toString());
 
             }
 
@@ -702,13 +684,15 @@
         hidden: [],
         key: 'id',
         title: 'DATOS',
-        selectionInput: null
+        selectionInput: null,
+        selected: [],
+        postData: {}
     };
 
     /** */
 
     /** Función para obtener la data */
-    function getJsonData(url, headers) {
+    function getJsonData(url, headers, postData) {
         return new Promise((resolve, reject) => {
             if (!url) {
                 return reject('No se pudo obtener la data');
@@ -716,6 +700,7 @@
             $.ajax({
                 url: url,
                 headers: headers,
+                data: postData,
                 success: function (data) {
                     resolve(data);
                 },

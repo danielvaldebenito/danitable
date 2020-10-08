@@ -10,10 +10,13 @@ $(document).ready(function() {
         // Agrega clase Css adicional
         element_class: 'danitable danitable-auto',
         // Input para cargar la primera seleccion
-        selectionInput: $('#input-data')
+        selectionInput: $('#input-data'),
+        selected: [ '1', '2', '3'],
+        postData: { data: 1 }
     })
     // Para obtener las filas seleccionadas (ids) en el momento de la selección
     .on('changeSelection', (ev, selection, row, checked) => {
+        console.log('changeSelection', selection);
         // Usar variable selection
         if (checked) {
             // console.log('Se ha seleccionado una fila', row);
